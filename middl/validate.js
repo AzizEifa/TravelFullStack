@@ -1,4 +1,5 @@
 const yup = require("yup");
+const { verifyToken } = require("../utils/jwt");
 
 async function validateUser(req, res, next) {
   try {
@@ -22,4 +23,23 @@ async function validateUser(req, res, next) {
     res.status(400).json(err);
   }
 }
-module.exports = { validateUser };
+async function authMiddleware(req, res, next) {
+  const authHeader = req.headers["authorization"];
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(403).json({ message: "Access denied. No token provided." });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = await verifyToken(token);
+    req.user = decoded; // You can access user in next middlewares/routes
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+}
+module.exports = { validateUser ,
+  authMiddleware
+};
