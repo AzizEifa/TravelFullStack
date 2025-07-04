@@ -1,9 +1,12 @@
 const User = require("../model/user");
+const { generateToken } = require("../utils/jwt");
+const bcrypt = require("bcryptjs");
 
 async function add(req, res) {
   try {
     console.log(req.body);
-    const user = new User(req.body);
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const user = new User({ ...req.body, password: hashedPassword });
     await user.save();
     res.status(200).json(user);
   } catch (err) {
@@ -65,6 +68,27 @@ async function updateuser(req, res) {
     console.log(err);
   }
 }
+async function login(req, res) {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    const token = generateToken({ id: user._id, username: user.username });
+    res.status(200).json({ token, user });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Login failed");
+  }
+}
 module.exports = {
   add,
   showuser,
@@ -73,4 +97,5 @@ module.exports = {
   showusernames,
   deleteUser,
   updateuser,
+  login,
 };
