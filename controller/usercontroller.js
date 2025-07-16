@@ -10,6 +10,11 @@ async function add(req, res) {
     await user.save();
     res.status(200).json(user);
   } catch (err) {
+     if (err.code === 11000) {
+    
+    const duplicateKey = Object.keys(err.keyPattern)[0];
+    return res.status(400).json({ message: `${duplicateKey} already exists` });
+  }
     console.log(err);
   }
 }
@@ -53,14 +58,15 @@ async function showusernames(req, res) {
 async function deleteUser(req, res) {
   try {
     await User.findByIdAndDelete(req.params.id);
-    res.status(200).send("user deleted!!");
+    res.status(200).json({ message: 'user deleted!!' });
   } catch (err) {
     console.log(err);
   }
 }
 async function updateuser(req, res) {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const user = await User.findByIdAndUpdate(req.params.id, { ...req.body, password: hashedPassword }, {
       new: true,
     });
     res.status(200).json(user);
@@ -70,19 +76,19 @@ async function updateuser(req, res) {
 }
 async function login(req, res) {
   try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid username or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const token = generateToken({ id: user._id, username: user.username });
+    const token = generateToken({ id: user._id, email: user.email, role: user.role , username: user.username });
     res.status(200).json({ token, user });
   } catch (err) {
     console.log(err);
