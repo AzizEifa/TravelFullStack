@@ -12,7 +12,7 @@ async function validateUser(req, res, next) {
         .string()
         .email()
         .required()
-        .matches(/^[a-z]+@gmail.com+$/),
+        .matches(/^[a-zA-Z][a-zA-Z0-9]*[0-9]+@gmail\.com$/),
       cin: yup.number().required().min(8,),
     });
     await schema.validate(req.body);
@@ -34,7 +34,7 @@ async function authMiddleware(req, res, next) {
 
   try {
     const decoded = await verifyToken(token);
-    req.user = decoded; // You can access user in next middlewares/routes
+    req.user = decoded; 
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });
