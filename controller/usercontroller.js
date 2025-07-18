@@ -68,7 +68,9 @@ async function updateuser(req, res) {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = await User.findByIdAndUpdate(req.params.id, { ...req.body, password: hashedPassword }, {
       new: true,
-    });
+    }
+  )
+  await user.save();
     res.status(200).json(user);
   } catch (err) {
     console.log(err);
