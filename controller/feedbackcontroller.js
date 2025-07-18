@@ -45,10 +45,10 @@ async function showByUserId(req, res) {
 async function deleteFeedback(req, res) {
   try {
     await Feedback.findByIdAndDelete(req.params.id);
-    res.status(200).send("Feedback deleted!");
+      res.status(200).json({ message: "Feedback deleted!" });
   } catch (err) {
     console.log(err);
-    res.status(500).send("Error deleting feedback");
+    res.status(500).json({ error: "Error deleting feedback" });
   }
 }
 
